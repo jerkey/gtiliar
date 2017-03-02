@@ -2,6 +2,10 @@
 #define CUTOUT_VOLTAGE  32.0    // turn off the inverter if the actual voltage is above this
 #define GTI_VSENSE      3       // output to GTI's brain through LPF and Ω/divider
 //#define GTI_ISENSE      11      // output to GTI's brain through LPF and Ω/divider
+#include <Adafruit_NeoPixel.h>
+#define NEOPIXEL_PIN    7       // control a strip of addressible LEDs
+#define NUM_LEDS        22      // how many LEDs in the ledstrip
+Adafruit_NeoPixel ledstrip = Adafruit_NeoPixel(NUM_LEDS, NEOPIXEL_PIN, NEO_GRB + NEO_KHZ800);
 #define KNOB_INPUT      A4      // input from user control knob
 #define VOLT_INPUT      A0      // read the actual DC input voltage
 #define ISENSE_INPUT    A5      // read ADC1 from the GTI
@@ -22,6 +26,8 @@ byte lastPwmVal = 0; // remember what we wrote last
 bool inverterOn = false; // whether the inverter was last on or off
 
 void setup() {
+  ledstrip.begin();
+  ledstrip.show(); // Initialize all pixels to 'off'
   Serial.begin(57600);
   Serial.println(VERSIONSTRING);
   pinMode(GTI_VSENSE,OUTPUT);
@@ -33,6 +39,9 @@ void loop() {
   float volt_input = avgAnalogRead(VOLT_INPUT) / VOLT_IN_COEFF; // get input voltage
   float amps_input = avgAnalogRead(ISENSE_INPUT) / ISENSE_COEFF; // get sensed amperage
   float knob_input = avgAnalogRead(KNOB_INPUT) / 1023; // get knob position 0.0-1.0
+
+  doLedStrip(amps_input / 15); // animate LEDs according to current
+  //doLedStrip(knob_input * 2); // animate LEDs according to knob
 
   if (inverterOn && knob_input < KNOB_SHUTOFF) { // if knob is turned down all the way
     inverterOn = false;
@@ -61,6 +70,18 @@ void loop() {
   Serial.print(lastPwmVal / GTI_VSENSE_COEFF,3);
   Serial.println();
   delay(100);
+}
+
+void doLedStrip(float quantity) {
+  for(int i=0; i<ledstrip.numPixels(); i++) {
+    if ((millis() % 1000) / 100 == i % 10) { // animation?
+      byte brightness = constrain(quantity*127,2,255);
+      ledstrip.setPixelColor(i, ledstrip.Color(brightness,brightness,brightness));
+    } else {
+      ledstrip.setPixelColor(i, ledstrip.Color(2,2,2));
+    }
+  }
+  ledstrip.show();
 }
 
 void setOutputVoltage(float outputVoltage) {
