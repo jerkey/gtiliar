@@ -8,10 +8,18 @@
 #define ISENSE_COEFF    (1023./5./14.5)    // divide ACD reading by this to get amps
 //#define VOLT_IN_COEFF   38.0    // divide ADC reading by this to get voltage
 #define VOLT_IN_COEFF 13.179  // divide ADC reading by this to get voltage
-#define GTI_VSENSE_COEFF   255.0    // mutiply desired voltage by this to get PWM value
+#define GTI_VSENSE_COEFF   245.0    // mutiply desired voltage by this to get PWM value
+// 2.55KΩ/10KΩ at pwm=73 we get 0.298v   at pwm=191 we get .779v
 #define ADC_OVERSAMPLE  25      // average analog inputs over this many cycles
+#define KNOB_SHUTOFF    0.01      // below this knob position, turn off inverter
+#define KNOB_TURNON     0.025      // above this knob position, turn inverter on
+#define INVERTER_TURNON 0.35    // signal voltage when inverter turns itself on
+#define INVERTER_TURNON_PAUSE 50    // milliseconds to wait for inverter to see turnon voltage
+#define INVERTER_FLOOR  0.27    // minimum signal voltage to keep inverter on
+#define INVERTER_CEILING 0.75    // maximum signal voltage to keep inverter happy
 
 byte lastPwmVal = 0; // remember what we wrote last
+bool inverterOn = false; // whether the inverter was last on or off
 
 void setup() {
   Serial.begin(57600);
@@ -25,8 +33,20 @@ void loop() {
   float volt_input = avgAnalogRead(VOLT_INPUT) / VOLT_IN_COEFF; // get input voltage
   float amps_input = avgAnalogRead(ISENSE_INPUT) / ISENSE_COEFF; // get sensed amperage
   float knob_input = avgAnalogRead(KNOB_INPUT) / 1023; // get knob position 0.0-1.0
-  if (volt_input < CUTOUT_VOLTAGE) {
-    setOutputVoltage(knob_input);
+
+  if (inverterOn && knob_input < KNOB_SHUTOFF) { // if knob is turned down all the way
+    inverterOn = false;
+    setOutputVoltage(0); // tell inverter to turn off
+  }
+  if (!inverterOn && knob_input > KNOB_TURNON) { // if knob is turned up from all the way down
+    inverterOn = true;
+    setOutputVoltage(INVERTER_TURNON); // voltage to trigger inverter to turn on
+    delay(INVERTER_TURNON_PAUSE); // wait for it to see it before going back to desired setting
+  }
+
+  float desiredInverterValue = knob_input;
+  if (volt_input < CUTOUT_VOLTAGE && inverterOn) {
+    setOutputVoltage( desiredInverterValue*(INVERTER_CEILING-INVERTER_FLOOR) + INVERTER_FLOOR ); // full range
   } else {
     setOutputVoltage(0); // turn off inverter above safe voltages
   }
