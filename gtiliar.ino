@@ -4,6 +4,8 @@
 //#define GTI_ISENSE      11      // output to GTI's brain through LPF and Ω/divider
 #define KNOB_INPUT      A4      // input from user control knob
 #define VOLT_INPUT      A0      // read the actual DC input voltage
+#define ISENSE_INPUT    A5      // read ADC1 from the GTI
+#define ISENSE_COEFF    (1023./5./14.5)    // divide ACD reading by this to get amps
 //#define VOLT_IN_COEFF   38.0    // divide ADC reading by this to get voltage
 #define VOLT_IN_COEFF 13.179  // divide ADC reading by this to get voltage
 #define GTI_VSENSE_COEFF   255.0    // mutiply desired voltage by this to get PWM value
@@ -21,6 +23,7 @@ void setup() {
 
 void loop() {
   float volt_input = avgAnalogRead(VOLT_INPUT) / VOLT_IN_COEFF; // get input voltage
+  float amps_input = avgAnalogRead(ISENSE_INPUT) / ISENSE_COEFF; // get sensed amperage
   float knob_input = avgAnalogRead(KNOB_INPUT) / 1023; // get knob position 0.0-1.0
   if (volt_input < CUTOUT_VOLTAGE) {
     setOutputVoltage(knob_input);
