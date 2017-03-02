@@ -30,12 +30,15 @@ void loop() {
   } else {
     setOutputVoltage(0); // turn off inverter above safe voltages
   }
-  Serial.print("Real voltage: ");
+
+  Serial.print("\tReal voltage: ");
   Serial.print(volt_input,1);
-  Serial.print("  knob position: ");
+  Serial.print("\tknob position: ");
   Serial.print(knob_input,4);
-  Serial.print("  pwmVal: ");
+  Serial.print("\tpwmVal: ");
   Serial.print(lastPwmVal);
+  Serial.print("\tOutputVoltage: ");
+  Serial.print(lastPwmVal / GTI_VSENSE_COEFF,3);
   Serial.println();
   delay(100);
 }
