@@ -53,7 +53,7 @@ void loop() {
     delay(INVERTER_TURNON_PAUSE); // wait for it to see it before going back to desired setting
   }
 
-  float desiredInverterValue = knob_input;
+  float desiredInverterValue = (knob_input - KNOB_TURNON) * (1.0 + KNOB_TURNON); // normalize knob range from minimum
   if (volt_input < CUTOUT_VOLTAGE && inverterOn) {
     setOutputVoltage( desiredInverterValue*(INVERTER_CEILING-INVERTER_FLOOR) + INVERTER_FLOOR ); // full range
   } else {
