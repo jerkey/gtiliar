@@ -35,6 +35,8 @@ void setup() {
   pinMode(GTI_VSENSE,OUTPUT);
   //pinMode(GTI_ISENSE,OUTPUT);
   setPwmFrequency(GTI_VSENSE,1); // set PWM to high-frequency
+  delay(1000);
+  Serial.println("finish 1-second delay");
 }
 
 void loop() {
