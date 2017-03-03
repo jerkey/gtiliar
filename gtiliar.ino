@@ -1,6 +1,6 @@
 #define VERSIONSTRING   "Grid Tie Inverter Liar to fool GTI inputs according to difficulty knob"
-#define CUTOUT_VOLTAGE  32.0    // turn off the inverter if the actual voltage is above this
-#define CUTOUT_WARNING  25.6    // turn off the inverter if the actual voltage is above this
+#define CUTOUT_VOLTAGE  33.0    // turn off the inverter if the actual voltage is above this
+#define CUTOUT_WARNING  (CUTOUT_VOLTAGE * 0.8)    // turn off the inverter if the actual voltage is above this
 #define GTI_VSENSE      3       // output to GTI's brain through LPF and Ω/divider
 //#define GTI_ISENSE      11      // output to GTI's brain through LPF and Ω/divider
 #include <Adafruit_NeoPixel.h>
@@ -19,8 +19,8 @@ Adafruit_NeoPixel ledstrip = Adafruit_NeoPixel(NUM_LEDS, NEOPIXEL_PIN, NEO_GRB +
 #define KNOB_SHUTOFF    0.01      // below this knob position, turn off inverter
 #define KNOB_TURNON     0.025      // above this knob position, turn inverter on
 #define INVERTER_TURNON 0.35    // signal voltage when inverter turns itself on
-#define INVERTER_TURNON_PAUSE 50    // milliseconds to wait for inverter to see turnon voltage
-#define INVERTER_FLOOR  0.27    // minimum signal voltage to keep inverter on
+#define INVERTER_TURNON_PAUSE 100    // milliseconds to wait for inverter to see turnon voltage
+#define INVERTER_FLOOR  0.29    // minimum signal voltage to keep inverter on
 #define INVERTER_CEILING 0.75    // maximum signal voltage to keep inverter happy
 
 byte lastPwmVal = 0; // remember what we wrote last
@@ -55,7 +55,8 @@ void loop() {
     delay(INVERTER_TURNON_PAUSE); // wait for it to see it before going back to desired setting
   }
 
-  float desiredInverterValue = (knob_input - KNOB_TURNON) * (1.0 + KNOB_TURNON); // normalize knob range from minimum
+  float knob_value = (knob_input - KNOB_TURNON) * (1.0 + KNOB_TURNON); // normalize knob range from minimum
+  float desiredInverterValue = volt_input / CUTOUT_VOLTAGE * knob_value; // here is where the magic happens
   if (volt_input < CUTOUT_VOLTAGE && inverterOn) {
     setOutputVoltage( desiredInverterValue*(INVERTER_CEILING-INVERTER_FLOOR) + INVERTER_FLOOR ); // full range
   } else {
@@ -80,11 +81,11 @@ void loop() {
 
 void doLedStrip(float quantity) {
   for(int i=0; i<ledstrip.numPixels(); i++) {
-    if (volt_input > CUTOUT_WARNING && (millis() % 1000 > 500)) { // blinking red
-      ledstrip.setPixelColor(i, ledstrip.Color(255,0,0)); // bright red
+    if (volt_input > CUTOUT_WARNING && (millis() % 1000 > 500) && (i % 2 == 0)) { // blinking red
+      ledstrip.setPixelColor(i, ledstrip.Color(64,0,0)); // bright red
     } else { // voltage is not above cutout warning
       if ((millis() % 1000) / 100 == i % 10) { // animation?
-        byte brightness = constrain(quantity*127,2,255);
+        byte brightness = constrain(quantity*255,2,255);
         ledstrip.setPixelColor(i, ledstrip.Color(brightness,brightness,brightness)); // white
       } else {
         ledstrip.setPixelColor(i, ledstrip.Color(2,2,2));
