@@ -9,13 +9,13 @@
 Adafruit_NeoPixel ledstrip = Adafruit_NeoPixel(NUM_LEDS, NEOPIXEL_PIN, NEO_GRB + NEO_KHZ800);
 #define KNOB_INPUT      A4      // input from user control knob
 #define VOLT_INPUT      A0      // read the actual DC input voltage
-#define ISENSE_INPUT    A5      // read ADC1 from the GTI
+#define ISENSE_INPUT    A2      // read ADC1 from the GTI
 #define ISENSE_COEFF    (1023./5./14.5)    // divide ACD reading by this to get amps
 //#define VOLT_IN_COEFF   38.0    // divide ADC reading by this to get voltage
 #define VOLT_IN_COEFF 13.179  // divide ADC reading by this to get voltage
 #define GTI_VSENSE_COEFF   245.0    // mutiply desired voltage by this to get PWM value
 // 2.55KΩ/10KΩ at pwm=73 we get 0.298v   at pwm=191 we get .779v
-#define ADC_OVERSAMPLE  25      // average analog inputs over this many cycles
+#define ADC_OVERSAMPLE  75      // average analog inputs over this many cycles
 #define KNOB_SHUTOFF    0.01      // below this knob position, turn off inverter
 #define KNOB_TURNON     0.025      // above this knob position, turn inverter on
 #define INVERTER_TURNON 0.35    // signal voltage when inverter turns itself on
@@ -103,7 +103,7 @@ void setOutputVoltage(float outputVoltage) {
 }
 
 float avgAnalogRead(int pinNumber) {
-  unsigned adder = 0; // store ADC samples here
+  unsigned long adder = 0; // store ADC samples here
   for (int i=0; i < ADC_OVERSAMPLE; i++) adder += analogRead(pinNumber);
   return ((float)adder/ADC_OVERSAMPLE);
 }
