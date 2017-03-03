@@ -1,5 +1,6 @@
 #define VERSIONSTRING   "Grid Tie Inverter Liar to fool GTI inputs according to difficulty knob"
 #define CUTOUT_VOLTAGE  32.0    // turn off the inverter if the actual voltage is above this
+#define CUTOUT_WARNING  25.6    // turn off the inverter if the actual voltage is above this
 #define GTI_VSENSE      3       // output to GTI's brain through LPF and Ω/divider
 //#define GTI_ISENSE      11      // output to GTI's brain through LPF and Ω/divider
 #include <Adafruit_NeoPixel.h>
@@ -24,6 +25,7 @@ Adafruit_NeoPixel ledstrip = Adafruit_NeoPixel(NUM_LEDS, NEOPIXEL_PIN, NEO_GRB +
 
 byte lastPwmVal = 0; // remember what we wrote last
 bool inverterOn = false; // whether the inverter was last on or off
+float volt_input, amps_input, knob_input;
 
 void setup() {
   ledstrip.begin();
@@ -36,9 +38,9 @@ void setup() {
 }
 
 void loop() {
-  float volt_input = avgAnalogRead(VOLT_INPUT) / VOLT_IN_COEFF; // get input voltage
-  float amps_input = avgAnalogRead(ISENSE_INPUT) / ISENSE_COEFF; // get sensed amperage
-  float knob_input = avgAnalogRead(KNOB_INPUT) / 1023; // get knob position 0.0-1.0
+  volt_input = avgAnalogRead(VOLT_INPUT) / VOLT_IN_COEFF; // get input voltage
+  amps_input = avgAnalogRead(ISENSE_INPUT) / ISENSE_COEFF; // get sensed amperage
+  knob_input = avgAnalogRead(KNOB_INPUT) / 1023; // get knob position 0.0-1.0
 
   doLedStrip(amps_input * volt_input / 200.0); // animate LEDs according to wattage
   //doLedStrip(knob_input * 2); // animate LEDs according to knob
@@ -78,11 +80,15 @@ void loop() {
 
 void doLedStrip(float quantity) {
   for(int i=0; i<ledstrip.numPixels(); i++) {
-    if ((millis() % 1000) / 100 == i % 10) { // animation?
-      byte brightness = constrain(quantity*127,2,255);
-      ledstrip.setPixelColor(i, ledstrip.Color(brightness,brightness,brightness));
-    } else {
-      ledstrip.setPixelColor(i, ledstrip.Color(2,2,2));
+    if (volt_input > CUTOUT_WARNING && (millis() % 1000 > 500)) { // blinking red
+      ledstrip.setPixelColor(i, ledstrip.Color(255,0,0)); // bright red
+    } else { // voltage is not above cutout warning
+      if ((millis() % 1000) / 100 == i % 10) { // animation?
+        byte brightness = constrain(quantity*127,2,255);
+        ledstrip.setPixelColor(i, ledstrip.Color(brightness,brightness,brightness)); // white
+      } else {
+        ledstrip.setPixelColor(i, ledstrip.Color(2,2,2));
+      }
     }
   }
   ledstrip.show();
