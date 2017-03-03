@@ -40,7 +40,7 @@ void loop() {
   float amps_input = avgAnalogRead(ISENSE_INPUT) / ISENSE_COEFF; // get sensed amperage
   float knob_input = avgAnalogRead(KNOB_INPUT) / 1023; // get knob position 0.0-1.0
 
-  doLedStrip(amps_input / 15); // animate LEDs according to current
+  doLedStrip(amps_input * volt_input / 200.0); // animate LEDs according to wattage
   //doLedStrip(knob_input * 2); // animate LEDs according to knob
 
   if (inverterOn && knob_input < KNOB_SHUTOFF) { // if knob is turned down all the way
@@ -62,6 +62,10 @@ void loop() {
 
   Serial.print("\tReal voltage: ");
   Serial.print(volt_input,1);
+  Serial.print("\tReal amps: ");
+  Serial.print(amps_input,1);
+  Serial.print("\tW: ");
+  Serial.print(amps_input * volt_input,1);
   Serial.print("\tknob position: ");
   Serial.print(knob_input,4);
   Serial.print("\tpwmVal: ");
