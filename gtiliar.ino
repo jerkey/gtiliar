@@ -51,6 +51,16 @@ void loop() {
   doLedStrip(amps_input * volt_input / 200.0); // animate LEDs according to wattage
   //doLedStrip(knob_input * 2); // animate LEDs according to knob
 
+  if (volt_input > 20.0 && amps_input < 1.0 && knob_input > KNOB_TURNON) {
+    Serial.println("TRIGGERING CAPACITOR CLEARING FUNCTION");
+    for (int i=0; i<4; i++) {
+      for (int j=0; j<10; j++) {
+        setOutputVoltage(j*(INVERTER_CEILING-INVERTER_FLOOR)/10 + INVERTER_FLOOR);
+        delay(25); // this times ten
+      }
+    }
+  }
+
   if (inverterOn && knob_input < KNOB_SHUTOFF) { // if knob is turned down all the way
     inverterOn = false;
     setOutputVoltage(0); // tell inverter to turn off
