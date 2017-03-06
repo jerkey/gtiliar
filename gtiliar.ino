@@ -1,3 +1,7 @@
+// hardware: put two 470Ω 1W resistors in series across "dump load" input
+// put a 6.8uF capacitor from ADC1 of GTI to ground to smooth its current perception
+// put a 2.55KΩ 1/4W resistor across relay contacts (maybe unnecessary with dump load?)
+// TODO: write a routine triggered by "zero current, high voltage" to drain the caps
 #define VERSIONSTRING   "Grid Tie Inverter Liar to fool GTI inputs according to difficulty knob"
 #define CUTOUT_VOLTAGE  33.0    // turn off the inverter if the actual voltage is above this
 #define CUTOUT_WARNING  (CUTOUT_VOLTAGE * 0.8)    // turn off the inverter if the actual voltage is above this
